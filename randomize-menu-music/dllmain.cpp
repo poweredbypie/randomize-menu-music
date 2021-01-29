@@ -5,12 +5,14 @@
 namespace globals {
     void(__stdcall* fadeInMusicGate)(const char*) = nullptr;
 
-    std::string randomLoop = "";
+    std::vector<std::string> validLoops;
+    std::default_random_engine generator;
+    std::uniform_int_distribution distribution;
 }
 
 void __declspec(dllexport) __stdcall fadeInMusicHook(const char* filename) {
-    std::string path = "menuLoops\\" + globals::randomLoop;
-    return globals::fadeInMusicGate(path.c_str());
+    using namespace globals;
+    return fadeInMusicGate(validLoops[distribution(generator)].c_str());
 }
 
 DWORD WINAPI attach(void* hModule) {
@@ -18,7 +20,6 @@ DWORD WINAPI attach(void* hModule) {
     constexpr std::string_view filter = " !#$%&'()+,-.0123456789;=@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{}~";
 
     path menuLoops = current_path() / "menuLoops";
-    std::vector<std::string> validLoops;
 
     if (exists(menuLoops)) {
         if (is_directory(menuLoops)) {
@@ -33,7 +34,7 @@ DWORD WINAPI attach(void* hModule) {
                     }
 
                     if (valid) {
-                        validLoops.push_back(loop.path().filename().u8string());
+                        globals::validLoops.push_back("menuLoops/" + loop.path().filename().u8string());
                     }
                 }
             }
@@ -47,16 +48,16 @@ DWORD WINAPI attach(void* hModule) {
     else
         create_directories(menuLoops);
 
-    if (validLoops.empty()) {
+    if (globals::validLoops.empty()) {
         MessageBox(0, L"ERROR: menuLoops is empty!\n"
-            "I can't give you a random menu loop if you don't have any loops for me to choose from!",
+            L"I can't give you a random menu loop if you don't have any loops for me to choose from!",
             L"menuLoop randomizer", MB_ICONERROR | MB_OK);
     }
     else {
-        srand(time(0));
-        globals::randomLoop = validLoops[rand() % (validLoops.size() - 1)];
-
         char* gdBase = reinterpret_cast<char*>(GetModuleHandle(0));
+        globals::distribution = std::uniform_int_distribution(0,
+            static_cast<int>(
+                globals::validLoops.size() - 1));
 
         hk fadeInMusic = {
             gdBase + 0xC4BD0,
@@ -81,6 +82,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     case DLL_PROCESS_ATTACH:
         _ = CreateThread(0, 0, attach, hModule, 0, 0);
         if (_) CloseHandle(_);
+        break;
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
     case DLL_PROCESS_DETACH:
