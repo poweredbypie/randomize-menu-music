@@ -2,8 +2,17 @@
  randomize gd menu music on startup
 
 # usage
+without mega hack 6:
 - download the zip in releases
 - drag both dlls into your Geometry Dash installation folder. replace the existing libtiff.dll with the downloaded one.
+- open gd
+- add mp3 files to the new folder named "menuLoops" in your installation folder.
+- enjoy (?)
+
+with mega hack 6:
+- download the zip in releases
+- drag the "randomize-menu-music.dll" file into your Geometry Dash installation folder.
+- edit "absolutedlls" with a new line, that adds the name of the new file, "randomize-menu-music.dll". no quotes.
 - open gd
 - add mp3 files to the new folder named "menuLoops" in your installation folder.
 - enjoy (?)
