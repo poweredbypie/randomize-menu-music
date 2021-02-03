@@ -34,7 +34,7 @@ DWORD WINAPI attach(void* hModule) {
                     }
 
                     if (valid) {
-                        globals::validLoops.push_back("menuLoops/" + loop.path().filename().u8string());
+                        globals::validLoops.push_back(loop.path().string());
                     }
                 }
             }
@@ -55,9 +55,18 @@ DWORD WINAPI attach(void* hModule) {
     }
     else {
         char* gdBase = reinterpret_cast<char*>(GetModuleHandle(0));
-        globals::distribution = std::uniform_int_distribution(0,
-            static_cast<int>(
-                globals::validLoops.size() - 1));
+        
+        globals::distribution = std::uniform_int_distribution {
+            0, static_cast<int>(globals::validLoops.size() - 1)
+        };
+
+        globals::generator = std::default_random_engine {
+            static_cast<unsigned int>(
+                std::chrono::system_clock::now()
+                .time_since_epoch()
+                .count()
+                )
+        };
 
         hk fadeInMusic = {
             gdBase + 0xC4BD0,
